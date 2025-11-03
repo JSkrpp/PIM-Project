@@ -15,9 +15,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Calorie Tracker',
-      theme: ThemeData(
+      theme: ThemeData( // app stylisation
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        navigationBarTheme: NavigationBarThemeData(
+          indicatorColor: Colors.green,
+          backgroundColor: Colors.white,
+        )
       ),
       home: const BottomNavM3(),
     );
@@ -41,25 +45,25 @@ class _BottomNavM3State extends State<BottomNavM3> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) { // bottom navBar initialization method
+    return Scaffold( // scaffold for navBar + current screen app type
       appBar: AppBar(
         title: const Text('Calorie Tracker'),
         centerTitle: true,
       ),
-      body: IndexedStack(
+      body: IndexedStack( // active screen shown here, allows the app to remember app states
         index: _selectedIndex,
         children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {
-          setState(() {
+          setState(() { // showing currently selected screen
             _selectedIndex = index;
           });
         },
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
+        destinations: const [ //
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
