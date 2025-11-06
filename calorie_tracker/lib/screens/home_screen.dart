@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:calorie_tracker/screens/home_add_screen.dart'; // przejscie do dodawacza jedzenia
+import 'package:calorie_tracker/state/calorie_goal.dart';
 
 class HomeScreen extends StatefulWidget { // stateful aby dalo się dodawac pozycje pozniej
   const HomeScreen({super.key}); // konstruktor
@@ -9,8 +10,6 @@ class HomeScreen extends StatefulWidget { // stateful aby dalo się dodawac pozy
 }
 
 class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
-
-  static const int dailyLimit = 2500; // dzienny limit kcal
 
   // lista map {nazwa posilku, ilosc kalorii w posilku}
   final List<Map<String, dynamic>> meals = [
@@ -32,6 +31,7 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
 
   @override
   Widget build(BuildContext context) {
+    final calorieGoal = CalorieGoalProvider.of(context).goal;
     int sum_kcal = 0; // suma kalorii z listy
 
     for (final m in meals) {
@@ -39,10 +39,20 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
       sum_kcal += kcal; // dodanie kalorii do sumy
     }
 
-    double progress_bar = sum_kcal / dailyLimit; // oblicza jak pasek sie wypelni od 0 - bez wypelnienia do 1 - caly wypelniony
+  double progress_bar = calorieGoal == 0 ? 0 : sum_kcal / calorieGoal; // oblicza jak pasek sie wypelni
 
     if (progress_bar > 1.0) {
       progress_bar = 1.0;
+    }
+
+    // Wybor koloru paska
+    Color barColor;
+    if (sum_kcal > calorieGoal) {
+      barColor = Colors.red.shade700; // przekroczono limit
+    } else if (progress_bar >= 0.8) {
+      barColor = Colors.orange.shade800; // 80% lub wiecej
+    } else {
+      barColor = Colors.green; // ponizej 80%
     }
 
     return Scaffold( // szkielet ekranu aby byla lista jako to co jest za guziekiem dodawania
@@ -66,7 +76,7 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
               LinearProgressIndicator( // pasek postępu
                 value: progress_bar, // wypelnienie
                 minHeight: 14, // wysokosc paska
-                color: Colors.green, // kolor
+                color: barColor, // kolor zaleznie od progresu
                 backgroundColor: Color(0xFFEAEAEA), // kolor tla
               ),
 
@@ -80,7 +90,7 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(
-                    '$sum_kcal / $dailyLimit kcal', // kalorie ile mamy na liscie / limit
+                    '$sum_kcal / $calorieGoal kcal', // kalorie ile mamy na liscie / limit
                     style: const TextStyle(fontWeight: FontWeight.bold), // pogrubiony zeby bylo widac
                   ),
                 ],
