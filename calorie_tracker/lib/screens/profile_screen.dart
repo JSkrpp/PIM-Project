@@ -7,7 +7,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        'Profile Screen',
+        'Profilele Screen',
         style: TextStyle(fontSize: 24),
       ),
     );
