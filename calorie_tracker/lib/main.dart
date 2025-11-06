@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Calorie Tracker',
       theme: ThemeData( // app stylisation
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         navigationBarTheme: NavigationBarThemeData(
           indicatorColor: Colors.green,
           backgroundColor: Colors.white,
