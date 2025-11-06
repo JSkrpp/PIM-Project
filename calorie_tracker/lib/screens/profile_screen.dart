@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:calorie_tracker/state/calorie_goal.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -10,7 +11,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoggedIn = true; // simple local state for demo purposes
   String _selectedTheme = 'System default';
-  int _calorieGoal = 2000; // kcal/day (pokazalem jak wysiwetlac wartosc zmeinnich niebedacych stringami w linii 220)
+  // Removed local calorieGoal; now using global CalorieGoalProvider.
 
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -19,7 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showCalorieGoalDialog() {
-    int tempGoal = _calorieGoal;
+    final provider = CalorieGoalProvider.of(context);
+    int tempGoal = provider.goal;
     final controller = TextEditingController(text: tempGoal.toString());
 
     showDialog(
@@ -60,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               final parsed = int.tryParse(controller.text.replaceAll(RegExp(r'[^0-9]'), ''));
               if (parsed != null) {
-                setState(() => _calorieGoal = parsed.clamp(500, 10000));
+                provider.setGoal(parsed.clamp(500, 10000));
               }
               Navigator.pop(context);
             },
@@ -217,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ListTile(
                         leading: Icon(Icons.flag_outlined, color: colorScheme.onSurfaceVariant),
                         title: const Text('Calorie goal'),
-                        subtitle: Text('$_calorieGoal kcal/day'),
+                        subtitle: Text('${CalorieGoalProvider.of(context).goal} kcal/day'),
                         onTap: _showCalorieGoalDialog,
                       ),
                       ListTile(

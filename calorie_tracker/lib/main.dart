@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'state/calorie_goal.dart';
 import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
 import 'screens/profile_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  final goal = CalorieGoal(2500);
+  runApp(CalorieGoalProvider(
+    notifier: goal,
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
