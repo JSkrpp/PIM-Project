@@ -45,6 +45,16 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
       progress_bar = 1.0;
     }
 
+    // Wybor koloru paska
+    Color barColor;
+    if (sum_kcal > calorieGoal) {
+      barColor = Colors.red.shade700; // przekroczono limit
+    } else if (progress_bar >= 0.8) {
+      barColor = Colors.orange.shade800; // 80% lub wiecej
+    } else {
+      barColor = Colors.green; // ponizej 80%
+    }
+
     return Scaffold( // szkielet ekranu aby byla lista jako to co jest za guziekiem dodawania
 
       body: SafeArea( // cialo
@@ -66,7 +76,7 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
               LinearProgressIndicator( // pasek postępu
                 value: progress_bar, // wypelnienie
                 minHeight: 14, // wysokosc paska
-                color: Colors.green, // kolor
+                color: barColor, // kolor zaleznie od progresu
                 backgroundColor: Color(0xFFEAEAEA), // kolor tla
               ),
 

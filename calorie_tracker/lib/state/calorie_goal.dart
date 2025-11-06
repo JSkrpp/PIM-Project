@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-class CalorieGoal extends ChangeNotifier {
+class CalorieGoal extends ChangeNotifier { 
   CalorieGoal(int initialGoal) : _goal = initialGoal;
 
   int _goal;
@@ -14,7 +14,7 @@ class CalorieGoal extends ChangeNotifier {
   }
 }
 
-class CalorieGoalProvider extends InheritedNotifier<CalorieGoal> {
+class CalorieGoalProvider extends InheritedNotifier<CalorieGoal> { // provider for the calorie goal
   const CalorieGoalProvider({super.key, required CalorieGoal notifier, required Widget child})
       : super(notifier: notifier, child: child);
 

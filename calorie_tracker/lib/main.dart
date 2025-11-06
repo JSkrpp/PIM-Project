@@ -5,7 +5,7 @@ import 'screens/food_screen.dart';
 import 'screens/profile_screen.dart';
 
 void main() {
-  final goal = CalorieGoal(2500);
+  final goal = CalorieGoal(2500); //setup initlial goal state for the provider
   runApp(CalorieGoalProvider(
     notifier: goal,
     child: const MyApp(),
