@@ -6,7 +6,7 @@ class Food {
   int kcalPer100g;
 }
 
-class FoodCatalog extends ChangeNotifier {
+class FoodCatalog extends ChangeNotifier { // food catalog controller
   final List<Food> _items;
   FoodCatalog([List<Food>? initial]) : _items = List.of(initial ?? []);
 

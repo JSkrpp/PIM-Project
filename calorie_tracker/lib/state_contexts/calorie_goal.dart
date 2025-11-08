@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-class CalorieGoal extends ChangeNotifier { 
+class CalorieGoal extends ChangeNotifier { // calorie goal controller
   CalorieGoal(int initialGoal) : _goal = initialGoal;
 
   int _goal;

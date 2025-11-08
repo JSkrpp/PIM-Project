@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:calorie_tracker/screens/home_add_screen.dart'; // przejscie do dodawacza jedzenia
-import 'package:calorie_tracker/state/calorie_goal.dart';
+import 'package:calorie_tracker/state_contexts/calorie_goal.dart';
 
 class HomeScreen extends StatefulWidget { // stateful aby dalo się dodawac pozycje pozniej
   const HomeScreen({super.key}); // konstruktor
@@ -12,16 +12,8 @@ class HomeScreen extends StatefulWidget { // stateful aby dalo się dodawac pozy
 class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
 
   // lista map {nazwa posilku, ilosc kalorii w posilku}
-  final List<Map<String, dynamic>> meals = [
-    {'name': 'dish 1', 'kcal': 300},
-    {'name': 'dish 2', 'kcal': 300},
-    {'name': 'dish 3', 'kcal': 200},
-    {'name': 'dish 4', 'kcal': 600},
-    {'name': 'dish 5', 'kcal': 100},
-    {'name': 'dish 6', 'kcal': 300},
-    {'name': 'dish 7', 'kcal': 100},
-    {'name': 'dish 8', 'kcal': 50},
-  ];
+  // TODO przy implementacji backendu utworzenie kontekstu daily progressu i ładowanie z bazy danych
+  final List<Map<String, dynamic>> meals = []; // na chwile obecna pusta lista przy startupie
 
   void addMeal(String name, int cal) { // funkcja do dodawania posilku
     setState(() {
@@ -32,14 +24,14 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
   @override
   Widget build(BuildContext context) {
     final calorieGoal = CalorieGoalProvider.of(context).goal;
-    int sum_kcal = 0; // suma kalorii z listy
+    int sum_kcal = 0;
 
     for (final m in meals) {
       int kcal = m['kcal'] as int;
-      sum_kcal += kcal; // dodanie kalorii do sumy
+      sum_kcal += kcal;
     }
 
-  double progress_bar = calorieGoal == 0 ? 0 : sum_kcal / calorieGoal; // oblicza jak pasek sie wypelni
+  double progress_bar = calorieGoal == 0 ? 0 : sum_kcal / calorieGoal; // oblicza wypelnienie progress bara
 
     if (progress_bar > 1.0) {
       progress_bar = 1.0;
@@ -106,7 +98,7 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
                     final meal = meals[index]; // pobiera element z listy
 
                     return Card(
-                      color: Colors.greenAccent, // kolor kafelka
+                      color: Colors.green, // kolor kafelka
 
                       child: ListTile( // element listy
                         leading: const Icon(Icons.restaurant_menu), // ikonka
@@ -122,22 +114,27 @@ class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
         ),
       ),
 
-      floatingActionButton: SizedBox( // kwadratowy guzika
-        width: 60, // szerokosc guzika
-        height: 60, // dlugosc guzika
+      floatingActionButton: SizedBox(
+        width: 60,
+        height: 60,
 
         child: FloatingActionButton(
           backgroundColor: Colors.green, // kolor guzika
 
-          shape: RoundedRectangleBorder( // kształt guzika z zaokragleniem
-            borderRadius: BorderRadius.circular(12), // jak bardzo zaokraglony guzik bedzie
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
 
-          onPressed: () { // jak sie kliknie
-            Navigator.push( // idziemy do nowej strony
-              context, // aktualny kontekst
+          onPressed: () async { // jak sie kliknie
+            final result = await Navigator.push( // idziemy do nowej strony i czekamy na wynik
+              context,
               MaterialPageRoute(builder: (context) => const HomeAddScreen()),
             );
+            
+            // Jesli uzytkownik wybral jedzenie, dane z result sa odpowiednio rzutowane i wywolywana jest funkcja addMeal
+            if (result != null && result is Map<String, dynamic>) {
+              addMeal(result['name'] as String, result['cal'] as int);
+            }
           },
           child: const Icon(Icons.add, size: 30, color: Colors.white), // ikona plusa w srodku guzika
         ),

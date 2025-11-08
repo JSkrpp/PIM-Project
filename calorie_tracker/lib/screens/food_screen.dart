@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:calorie_tracker/state/food_catalog.dart';
+import 'package:calorie_tracker/state_contexts/food_catalog.dart';
+
+//TODO Implementacja ładowania listy z backendu
 
 class FoodScreen extends StatefulWidget {
   const FoodScreen({super.key});
@@ -13,10 +15,10 @@ class _FoodScreenState extends State<FoodScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final catalog = FoodCatalogProvider.of(context);
+    final catalog = FoodCatalogProvider.of(context); // ladowanie kontekstu katalogu
     final items = catalog.items
         .where((f) => f.name.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
+        .toList(); // query do filtrowania produktu
 
     return Scaffold(
       body: SafeArea(
@@ -46,7 +48,7 @@ class _FoodScreenState extends State<FoodScreen> {
                           child: ListTile(
                             leading: const Icon(Icons.cookie_outlined),
                             title: Text(f.name),
-                            subtitle: Text('${f.kcalPer100g} kcal / 100 g'),
+                            subtitle: Text('${f.kcalPer100g} kcal'),
                             onTap: () => _openEditDialog(context, catalog, f),
                             trailing: IconButton(
                               tooltip: 'Usuń',
@@ -97,7 +99,7 @@ class _FoodScreenState extends State<FoodScreen> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(
-                labelText: 'kcal / 100 g',
+                labelText: 'kcal',
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
@@ -157,7 +159,7 @@ class _FoodScreenState extends State<FoodScreen> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(
-                labelText: 'kcal / 100 g',
+                labelText: 'kcal',
                 border: OutlineInputBorder(),
               ),
               validator: (v) {

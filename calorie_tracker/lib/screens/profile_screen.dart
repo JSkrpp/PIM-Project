@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:calorie_tracker/state/calorie_goal.dart';
-import 'package:calorie_tracker/state/app_theme.dart';
+import 'package:calorie_tracker/state_contexts/calorie_goal.dart';
+import 'package:calorie_tracker/state_contexts/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,11 +11,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoggedIn = true; // simple local state for demo purposes
-  String _selectedTheme = 'System default';
-  // Removed local calorieGoal; now using global CalorieGoalProvider.
+  String _selectedTheme = 'System default'; // name of selected theme for display purposes
 
-
-  void _showCalorieGoalDialog() {
+  // TODO ładowanie configu z aplikacj przy implementacji backendu
+  void _showCalorieGoalDialog() { // method for popping up the calorie goal dialog
     final provider = CalorieGoalProvider.of(context);
     int tempGoal = provider.goal;
     final controller = TextEditingController(text: tempGoal.toString());
@@ -34,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: false),
                 decoration: const InputDecoration(
                   labelText: 'Calories per day',
+                  hintText: '500-10000', // hint text for kcal range
                   suffixText: 'kcal',
                 ),
                 onChanged: (value) {
