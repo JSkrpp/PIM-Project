@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:calorie_tracker/state/calorie_goal.dart';
+import 'package:calorie_tracker/state/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,11 +14,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _selectedTheme = 'System default';
   // Removed local calorieGoal; now using global CalorieGoalProvider.
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
 
   void _showCalorieGoalDialog() {
     final provider = CalorieGoalProvider.of(context);
@@ -41,15 +37,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   suffixText: 'kcal',
                 ),
                 onChanged: (value) {
-                  final parsed = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
-                  if (parsed != null) setLocal(() => tempGoal = parsed.clamp(500, 10000));
+                  final parsed = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')); // parse input using regex for removing all non-numbers
+                  if (parsed != null) setLocal(() => tempGoal = parsed.clamp(500, 10000)); // clamping amount between 500 and 10000
                 },
               ),
               const SizedBox(height: 12),
-              Text(
-                'Tip: Typical range 1,600–3,000 kcal',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
             ],
           ),
         ),
@@ -75,7 +67,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showThemeSelector() { // method for popping up the theme selector dialog
     String tempSelection = _selectedTheme;
-    
+    final themeController = AppThemeProvider.of(context);
+
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -122,6 +116,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           FilledButton(
             onPressed: () {
               setState(() => _selectedTheme = tempSelection);
+              switch (tempSelection) {
+                case 'Light':
+                  themeController.setMode(ThemeMode.light);
+                  break;
+                case 'Dark':
+                  themeController.setMode(ThemeMode.dark);
+                  break;
+                default:
+                  themeController.setMode(ThemeMode.system);
+              }
               Navigator.pop(context);
             },
             child: const Text('Apply'),
@@ -143,15 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Container(
               width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    colorScheme.primaryContainer.withValues(),
-                    colorScheme.primary.withValues(),
-                  ],
-                ),
+              decoration: BoxDecoration( // profile background color
+                color: Colors.green.shade700,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -181,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   FilledButton.icon(
-                    onPressed: () => _showSnack('Change photo tapped'),
+                    onPressed: () => {},
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit profile'),
                   ),
@@ -211,21 +208,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       ListTile(
-                        leading: Icon(Icons.person_outline, color: colorScheme.onSurfaceVariant),
-                        title: const Text('Edit profile'),
-                        subtitle: const Text('Name, photo'),
-                        onTap: () => _showSnack('Edit profile tapped'),
-                      ),
-                      ListTile(
                         leading: Icon(Icons.flag_outlined, color: colorScheme.onSurfaceVariant),
                         title: const Text('Calorie goal'),
                         subtitle: Text('${CalorieGoalProvider.of(context).goal} kcal/day'),
                         onTap: _showCalorieGoalDialog,
-                      ),
-                      ListTile(
-                        leading: Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
-                        title: const Text('Change password'),
-                        onTap: () => _showSnack('Change password tapped'),
                       ),
                       Divider(height: 24, color: colorScheme.outlineVariant),
                       Padding(
@@ -266,7 +252,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         onTap: () {
                           setState(() => _isLoggedIn = !_isLoggedIn);
-                          _showSnack(_isLoggedIn ? 'Logged in' : 'Logged out');
                         },
                       ),
                     ],

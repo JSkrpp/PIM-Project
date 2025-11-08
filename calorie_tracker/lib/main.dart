@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'state/calorie_goal.dart';
+import 'state/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
 import 'state/food_catalog.dart';
@@ -16,11 +17,16 @@ void main() {
   ]);
 
 
-  runApp(CalorieGoalProvider(
-    notifier: goal,
-    child: FoodCatalogProvider(
-      notifier: catalog,
-      child: const MyApp(),
+  final themeController = AppThemeController();
+
+  runApp(AppThemeProvider(
+    notifier: themeController,
+    child: CalorieGoalProvider(
+      notifier: goal,
+      child: FoodCatalogProvider(
+        notifier: catalog,
+        child: const MyApp(),
+      ),
     ),
   ));
 }
@@ -28,20 +34,36 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Calorie Tracker',
-      theme: ThemeData( // app stylisation
+  ThemeData _buildLight() => ThemeData( // light mode builder
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        navigationBarTheme: NavigationBarThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.light),
+        navigationBarTheme: const NavigationBarThemeData(
           indicatorColor: Colors.green,
           backgroundColor: Colors.white,
-        )
+        ),
+      );
+
+  ThemeData _buildDark() => ThemeData( //dark mode builder
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark),
+        navigationBarTheme: const NavigationBarThemeData(
+          indicatorColor: Colors.green,
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final themeController = AppThemeProvider.of(context);
+    return AnimatedBuilder(
+      animation: themeController,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Calorie Tracker',
+        theme: _buildLight(),
+        darkTheme: _buildDark(),
+        themeMode: themeController.mode,
+        home: const BottomNavM3(),
       ),
-      home: const BottomNavM3(),
     );
   }
 }
