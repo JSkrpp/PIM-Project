@@ -29,13 +29,13 @@ class FoodCatalog extends ChangeNotifier {
   }
 }
 
-class FoodCatalogProvider extends InheritedNotifier<FoodCatalog> {
+class FoodCatalogProvider extends InheritedNotifier<FoodCatalog> { // notifier for changes in food catalog
   const FoodCatalogProvider({
     required super.notifier,
     required super.child,
     super.key,
   });
 
-  static FoodCatalog of(BuildContext context) =>
+  static FoodCatalog of(BuildContext context) => //context builder
       context.dependOnInheritedWidgetOfExactType<FoodCatalogProvider>()!.notifier!;
 }
