@@ -2,13 +2,26 @@ import 'package:flutter/material.dart';
 import 'state/calorie_goal.dart';
 import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
+import 'state/food_catalog.dart';
 import 'screens/profile_screen.dart';
 
 void main() {
   final goal = CalorieGoal(2500); //setup initlial goal state for the provider
+  final catalog = FoodCatalog([
+    Food(name: 'Ryż biały', kcalPer100g: 130),
+    Food(name: 'Jajko', kcalPer100g: 155),
+    Food(name: 'Kurczak pieczony', kcalPer100g: 239),
+    Food(name: 'Brokuły', kcalPer100g: 32),
+    Food(name: 'Marchew', kcalPer100g: 41),
+  ]);
+
+
   runApp(CalorieGoalProvider(
     notifier: goal,
-    child: const MyApp(),
+    child: FoodCatalogProvider(
+      notifier: catalog,
+      child: const MyApp(),
+    ),
   ));
 }
 
