@@ -20,7 +20,7 @@ void main() {
   final themeController = AppThemeController();
 
 
-  runApp(AppThemeProvider(
+  runApp(AppThemeProvider( // current widget tree, wrap every new provider here
     notifier: themeController,
     child: CalorieGoalProvider(
       notifier: goal,
@@ -104,7 +104,7 @@ class _BottomNavM3State extends State<BottomNavM3> {
           });
         },
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [ //
+        destinations: const [ // labels and corresponding destinations
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
