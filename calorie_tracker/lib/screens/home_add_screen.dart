@@ -1,132 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // do klawiatury
+import 'package:calorie_tracker/state_contexts/food_catalog.dart';
 
 class HomeAddScreen extends StatefulWidget {
-  const HomeAddScreen({super.key}); // konstruktor
+  const HomeAddScreen({super.key});
 
   @override
-  State<HomeAddScreen> createState() => HomeAddScreenState(); // stan ekranu
+  State<HomeAddScreen> createState() => _HomeAddScreenState();
 }
 
-class HomeAddScreenState extends State<HomeAddScreen> { // klasa stanu dla ekranu
-  final formKey = GlobalKey<FormState>(); // klucz do walidacji
-  final nameController = TextEditingController(); // kontroler pola nazwy
-  final kcalController = TextEditingController(); // kontroler pola kalorii
-
-  @override
-  void dispose() { // sprzatanie
-    nameController.dispose(); // zwalnia kontroler nazwy
-    kcalController.dispose(); // zwalnia kontroler kalorii
-    super.dispose();
-  }
+class _HomeAddScreenState extends State<HomeAddScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
+    final catalog = FoodCatalogProvider.of(context); // loading catalog from provider
+    final allItems = catalog.items;
+    
+    // Filter items based on search query
+    final filteredItems = _searchQuery.isEmpty
+        ? allItems
+        : allItems.where((food) => food.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
-    return Scaffold( // szkielet ekranu z bialym tlem polami i guzikiem
-
+    return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Meal'),
-        centerTitle: true, // centrowanie
+        title: const Text('Select Product'),
+        centerTitle: true,
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16), // odstęp 16 pikseli ze wszystkich stron
-
-        child: Form( // formularz
-          key: formKey, // klucz formularza
-
-          child: Column( // ustawienie pionowe jeden pod drugim
-            crossAxisAlignment: CrossAxisAlignment.stretch, // rozciagniecie
-
-            children: [
-              TextFormField( // pole nazwy
-                controller: nameController, // kontroler pola nazwy
-
-                textInputAction: TextInputAction.next, // enter przechodzi do kolejnego pola
-
-                decoration: const InputDecoration( // wyglad pola
-                  labelText: 'Meal name', // etykieta
-                  border: OutlineInputBorder(), // ramka
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => setState(() => _searchQuery = ''),
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-
-                validator: (valid) { // walidacja nazwy
-                  if (valid == null || valid.trim().isEmpty) { // sprawdza czy puste
-                    return 'enter meal name';
-                  }
-                  return null;
-                },
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
               ),
-
-              const SizedBox(height: 12),
-
-              TextFormField( // pole kalorii
-                controller: kcalController, // kontroler kalorii
-
-                keyboardType: TextInputType.number, // klawiatura numeryczna
-
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly], // pozwala wpisać tylko cyfry
-
-                textInputAction: TextInputAction.done, // enter to koniec
-
-                decoration: const InputDecoration(
-                  labelText: 'Calories (kcal)', // etykieta
-                  border: OutlineInputBorder(), // ramka
-                ),
-
-                validator: (valid) { // walidacja kalorii
-                  if (valid == null || valid.trim().isEmpty) { // sprawdza czy puste
-                    return 'enter calories';
-                  }
-
-                  final n = int.tryParse(valid); // praba zmiany na liczbe
-
-                  if (n == null || n <= 0) {
-                    return 'enter a number > 0'; // liczba musi być > 0
-                  }
-
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              Align(
-                alignment: Alignment.center, // centrowanie guzika
-
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom( // styl guzika
-                    backgroundColor: Colors.blue, // kolor tla
-
-                    foregroundColor: Colors.white, // kolor napisu
-
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12), // rozmiar guzika
-
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // zaokraglenie
-                  ),
-
-                  onPressed: () {
-                    if (formKey.currentState?.validate() ?? false) { // jak walidacja ok
-                      final name = nameController.text.trim(); // nazwa
-
-                      final kcal = int.parse(kcalController.text.trim()); // kalorie
-
-                      Navigator.pop(context, {'name': name, 'cal': kcal}); // wraca na poprzedni ekran
-                    }
-                  },
-                  child: const Text('ADD', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), // napis guzika pogrubiony
-                ),
-
-              ),
-
-            ],
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
           ),
-
-        ),
-
+          // Product list
+          Expanded(
+            child: filteredItems.isEmpty
+                ? Center(
+                    child: Text(
+                      _searchQuery.isEmpty ? 'No products available' : 'No products found',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    itemCount: filteredItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 4),
+                    itemBuilder: (context, index) {
+                      final food = filteredItems[index];
+                      return Card(
+                        key: ValueKey('${food.name}_${food.kcalPer100g}_$index'),
+                        elevation: 1,
+                        child: ListTile(
+                          leading: const Icon(Icons.cookie_outlined),
+                          title: Text(food.name),
+                          subtitle: Text('${food.kcalPer100g} kcal'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.pop(context, { // return selected food data
+                              'name': food.name,
+                              'cal': food.kcalPer100g,
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
-
     );
-
   }
 }

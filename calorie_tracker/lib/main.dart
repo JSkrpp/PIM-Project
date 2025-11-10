@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-import 'state/calorie_goal.dart';
-import 'state/app_theme.dart';
+import 'state_contexts/calorie_goal.dart';
+import 'state_contexts/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
-import 'state/food_catalog.dart';
+import 'state_contexts/food_catalog.dart';
 import 'screens/profile_screen.dart';
 
 void main() {
-  final goal = CalorieGoal(2500); //setup initlial goal state for the provider
+
+
+  final goal = CalorieGoal(2500);
   final catalog = FoodCatalog([
-    Food(name: 'Ryż biały', kcalPer100g: 130),
-    Food(name: 'Jajko', kcalPer100g: 155),
-    Food(name: 'Kurczak pieczony', kcalPer100g: 239),
-    Food(name: 'Brokuły', kcalPer100g: 32),
-    Food(name: 'Marchew', kcalPer100g: 41),
+    Food(name: 'Ryż biały 100g', kcalPer100g: 130),
+    Food(name: 'Jajko 50g', kcalPer100g: 78),
+    Food(name: 'Kurczak pieczony 200g', kcalPer100g: 476),
+    Food(name: 'Brokuły 150g', kcalPer100g: 48),
+    Food(name: 'Marchew 100g', kcalPer100g: 41),
   ]);
-
-
   final themeController = AppThemeController();
 
-  runApp(AppThemeProvider(
+
+  runApp(AppThemeProvider( // current widget tree, wrap every new provider here
     notifier: themeController,
     child: CalorieGoalProvider(
       notifier: goal,
@@ -103,7 +104,7 @@ class _BottomNavM3State extends State<BottomNavM3> {
           });
         },
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [ //
+        destinations: const [ // labels and corresponding destinations
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
