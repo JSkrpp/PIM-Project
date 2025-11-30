@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "496642938014",
+    "project_id": "piw-calorie-tracker",
+    "storage_bucket": "piw-calorie-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:496642938014:android:44c78debc154ed1e37d78f",
+        "android_client_info": {
+          "package_name": "com.mobilki.calories"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYFfMO6epB-Y97pgxkPFF9iJfvldZZG4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
