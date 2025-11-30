@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/auth_service.dart';
+import 'screens/login_screen.dart';
 import 'state_contexts/calorie_goal.dart';
 import 'state_contexts/app_theme.dart';
 import 'screens/home_screen.dart';
@@ -6,30 +11,99 @@ import 'screens/food_screen.dart';
 import 'state_contexts/food_catalog.dart';
 import 'screens/profile_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
+  runApp(const RootApp());
+}
 
-  final goal = CalorieGoal(2500);
-  final catalog = FoodCatalog([
-    Food(name: 'Ryż biały 100g', kcalPer100g: 130),
-    Food(name: 'Jajko 50g', kcalPer100g: 78),
-    Food(name: 'Kurczak pieczony 200g', kcalPer100g: 476),
-    Food(name: 'Brokuły 150g', kcalPer100g: 48),
-    Food(name: 'Marchew 100g', kcalPer100g: 41),
-  ]);
-  final themeController = AppThemeController();
+class RootApp extends StatelessWidget {
+  const RootApp({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        Provider<AuthService>(create: (_) => AuthService()),
+        StreamProvider<User?>(
+          create: (context) => context.read<AuthService>().user,
+          initialData: null,
+        ),
+      ],
+      child: const AuthStreamHandler(),
+    );
+  }
+}
 
-  runApp(AppThemeProvider( // current widget tree, wrap every new provider here
-    notifier: themeController,
-    child: CalorieGoalProvider(
-      notifier: goal,
-      child: FoodCatalogProvider(
-        notifier: catalog,
-        child: const MyApp(),
+class AuthStreamHandler extends StatelessWidget {
+  const AuthStreamHandler({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<User?>(context);
+    if (user == null) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: LoginScreen(),
+      );
+    }
+    return AuthWrapper(key: ValueKey(user.uid), user: user);
+  }
+}
+
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key, required this.user});
+  final User user;
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  late CalorieGoal _goal;
+  late FoodCatalog _catalog;
+  late AppThemeController _themeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _goal = CalorieGoal(2500);
+    _goal.connectToFirestore(widget.user.uid);
+    
+    _catalog = FoodCatalog([
+      Food(name: 'Ryż biały 100g', kcalPer100g: 130),
+      Food(name: 'Jajko 50g', kcalPer100g: 78),
+      Food(name: 'Kurczak pieczony 200g', kcalPer100g: 476),
+      Food(name: 'Brokuły 150g', kcalPer100g: 48),
+      Food(name: 'Marchew 100g', kcalPer100g: 41),
+    ]);
+    _catalog.connectToFirestore(widget.user.uid);
+    _themeController = AppThemeController();
+    _themeController.connectToFirestore(widget.user.uid);
+  }
+
+  @override
+  void dispose() {
+    _goal.dispose();
+    _catalog.dispose();
+    _themeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppThemeProvider(
+      notifier: _themeController,
+      child: CalorieGoalProvider(
+        notifier: _goal,
+        child: FoodCatalogProvider(
+          notifier: _catalog,
+          child: const MyApp(),
+        ),
       ),
-    ),
-  ));
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -63,20 +137,20 @@ class MyApp extends StatelessWidget {
         theme: _buildLight(),
         darkTheme: _buildDark(),
         themeMode: themeController.mode,
-        home: const BottomNavM3(),
+        home: const BottomNav(),
       ),
     );
   }
 }
 
-class BottomNavM3 extends StatefulWidget {
-  const BottomNavM3({super.key});
+class BottomNav extends StatefulWidget {
+  const BottomNav({super.key});
 
   @override
-  State<BottomNavM3> createState() => _BottomNavM3State();
+  State<BottomNav> createState() => _BottomNavState();
 }
 
-class _BottomNavM3State extends State<BottomNavM3> {
+class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
@@ -100,7 +174,7 @@ class _BottomNavM3State extends State<BottomNavM3> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {
           setState(() { // showing currently selected screen
-            _selectedIndex = index;
+            _selectedIndex = index; // update current index
           });
         },
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

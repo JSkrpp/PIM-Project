@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:calorie_tracker/state_contexts/calorie_goal.dart';
 import 'package:calorie_tracker/state_contexts/app_theme.dart';
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -10,11 +13,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isLoggedIn = true; // simple local state for demo purposes
-  String _selectedTheme = 'System default'; // name of selected theme for display purposes
+  String _selectedTheme = 'System default';
 
-  // TODO ładowanie configu z aplikacj przy implementacji backendu
-  void _showCalorieGoalDialog() { // method for popping up the calorie goal dialog
+  void _showCalorieGoalDialog() {
     final provider = CalorieGoalProvider.of(context);
     int tempGoal = provider.goal;
     final controller = TextEditingController(text: tempGoal.toString());
@@ -33,12 +34,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: false),
                 decoration: const InputDecoration(
                   labelText: 'Calories per day',
-                  hintText: '500-10000', // hint text for kcal range
+                  hintText: '500-10000',
                   suffixText: 'kcal',
                 ),
                 onChanged: (value) {
-                  final parsed = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')); // parse input using regex for removing all non-numbers
-                  if (parsed != null) setLocal(() => tempGoal = parsed.clamp(500, 10000)); // clamping amount between 500 and 10000
+                  final parsed = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
+                  if (parsed != null) setLocal(() => tempGoal = parsed.clamp(500, 10000));
                 },
               ),
               const SizedBox(height: 12),
@@ -65,10 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showThemeSelector() { // method for popping up the theme selector dialog
+  void _showThemeSelector() {
     String tempSelection = _selectedTheme;
     final themeController = AppThemeProvider.of(context);
-
 
     showDialog(
       context: context,
@@ -139,15 +139,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final user = Provider.of<User?>(context);
 
     return SafeArea(
       child: Column(
         children: [
-          // Upper half: profile picture and name
           Expanded(
             child: Container(
               width: double.infinity,
-              decoration: BoxDecoration( // profile background color
+              decoration: BoxDecoration(
                 color: Colors.green.shade700,
               ),
               child: Column(
@@ -156,37 +156,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 52,
                     backgroundColor: colorScheme.primary,
-                    child: Icon(
-                      Icons.person,
-                      size: 64,
-                      color: colorScheme.onPrimary,
-                    ),
+                    backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+                    child: user?.photoURL == null
+                        ? Icon(
+                            Icons.person,
+                            size: 64,
+                            color: colorScheme.onPrimary,
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Your Name',
+                    user?.displayName ?? 'User',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _isLoggedIn ? 'you@example.com' : 'Not logged in',
+                    user?.email ?? 'No email',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: () => {},
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Edit profile'),
-                  ),
                 ],
               ),
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -243,15 +241,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       ListTile(
                         leading: Icon(
-                          _isLoggedIn ? Icons.logout : Icons.login,
-                          color: _isLoggedIn ? colorScheme.error : null,
+                          Icons.logout,
+                          color: colorScheme.error,
                         ),
-                        title: Text(_isLoggedIn ? 'Logout' : 'Login'),
+                        title: const Text('Logout'),
                         titleTextStyle: theme.textTheme.titleMedium?.copyWith(
-                          color: _isLoggedIn ? colorScheme.error : theme.colorScheme.onSurface,
+                          color: colorScheme.error,
                         ),
-                        onTap: () {
-                          setState(() => _isLoggedIn = !_isLoggedIn);
+                        onTap: () async {
+                          await context.read<AuthService>().signOut();
                         },
                       ),
                     ],

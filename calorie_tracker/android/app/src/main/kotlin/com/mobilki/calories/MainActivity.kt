@@ -1,4 +1,4 @@
-package com.example.calorie_tracker
+package com.mobilki.calories
 
 import io.flutter.embedding.android.FlutterActivity
 

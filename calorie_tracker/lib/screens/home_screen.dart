@@ -1,146 +1,140 @@
 import 'package:flutter/material.dart';
-import 'package:calorie_tracker/screens/home_add_screen.dart'; // przejscie do dodawacza jedzenia
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:calorie_tracker/screens/home_add_screen.dart';
 import 'package:calorie_tracker/state_contexts/calorie_goal.dart';
+import '../services/database_service.dart';
 
-class HomeScreen extends StatefulWidget { // stateful aby dalo się dodawac pozycje pozniej
-  const HomeScreen({super.key}); // konstruktor
-
-  @override
-  State<HomeScreen> createState() => HomeScreenState(); // obiekt stanu dla ekranu
-}
-
-class HomeScreenState extends State<HomeScreen> { // klasa stanu dla ekranu
-
-  // lista map {nazwa posilku, ilosc kalorii w posilku}
-  // TODO przy implementacji backendu utworzenie kontekstu daily progressu i ładowanie z bazy danych
-  final List<Map<String, dynamic>> meals = []; // na chwile obecna pusta lista przy startupie
-
-  void addMeal(String name, int cal) { // funkcja do dodawania posilku
-    setState(() {
-      meals.add({'name': name, 'kcal': cal}); // dodanie posliku
-    }); // po setState lista sama sie odswiezy
-  }
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<User>(context);
+    final db = DatabaseService(uid: user.uid);
     final calorieGoal = CalorieGoalProvider.of(context).goal;
-    int sum_kcal = 0;
 
-    for (final m in meals) {
-      int kcal = m['kcal'] as int;
-      sum_kcal += kcal;
-    }
+    return StreamBuilder<QuerySnapshot>(
+      stream: db.foods,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('Something went wrong'));
+        }
 
-  double progress_bar = calorieGoal == 0 ? 0 : sum_kcal / calorieGoal; // oblicza wypelnienie progress bara
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (progress_bar > 1.0) {
-      progress_bar = 1.0;
-    }
+        final docs = snapshot.data!.docs;
+        int sumKcal = 0;
+        final meals = docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final kcal = data['calories'] as int;
+          sumKcal += kcal;
+          return {
+            'name': data['name'],
+            'kcal': kcal,
+            'id': doc.id,
+          };
+        }).toList();
 
-    // Wybor koloru paska
-    Color barColor;
-    if (sum_kcal > calorieGoal) {
-      barColor = Colors.red.shade700; // przekroczono limit
-    } else if (progress_bar >= 0.8) {
-      barColor = Colors.orange.shade800; // 80% lub wiecej
-    } else {
-      barColor = Colors.green; // ponizej 80%
-    }
+        double progressBar = calorieGoal == 0 ? 0 : sumKcal / calorieGoal;
+        if (progressBar > 1.0) progressBar = 1.0;
 
-    return Scaffold( // szkielet ekranu aby byla lista jako to co jest za guziekiem dodawania
+        Color barColor;
+        if (sumKcal > calorieGoal) {
+          barColor = Colors.red.shade700;
+        } else if (progressBar >= 0.8) {
+          barColor = Colors.orange.shade800;
+        } else {
+          barColor = Colors.green;
+        }
 
-      body: SafeArea( // cialo
-
-        child: Padding(
-          padding: const EdgeInsets.all(16), // odstęp 16 pikseli ze wszystkich stron
-
-          child: Column( // ustawienie pionowe jeden pod drugim
-            crossAxisAlignment: CrossAxisAlignment.start, // rozciagniecie
-
-            children: [
-              const Text(
-                'Daily Progress',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), // pogrubiony zeby bylo widac
-              ),
-
-              const SizedBox(height: 10), // przerwa 12 pikseli pion
-
-              LinearProgressIndicator( // pasek postępu
-                value: progress_bar, // wypelnienie
-                minHeight: 14, // wysokosc paska
-                color: barColor, // kolor zaleznie od progresu
-                backgroundColor: Color(0xFFEAEAEA), // kolor tla
-              ),
-
-              const SizedBox(height: 20), // kolejna przerwa
-
-              Row( // wiersz z tekstem i liczba kalorii
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // oba teksty na przeciwnych koncach
+        return Scaffold(
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Today's Meals",
-                    style: Theme.of(context).textTheme.titleMedium,
+                  const Text(
+                    'Daily Progress',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
-                  Text(
-                    '$sum_kcal / $calorieGoal kcal', // kalorie ile mamy na liscie / limit
-                    style: const TextStyle(fontWeight: FontWeight.bold), // pogrubiony zeby bylo widac
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: progressBar,
+                    minHeight: 14,
+                    color: barColor,
+                    backgroundColor: const Color(0xFFEAEAEA),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Today's Meals",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        '$sumKcal / $calorieGoal kcal',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: meals.length,
+                      itemBuilder: (context, index) {
+                        final meal = meals[index];
+                        return Dismissible(
+                          key: Key(meal['id'] as String),
+                          onDismissed: (direction) {
+                            db.deleteFood(meal['id'] as String);
+                          },
+                          background: Container(color: Colors.red),
+                          child: Card(
+                            color: Colors.green,
+                            child: ListTile(
+                              leading: const Icon(Icons.restaurant_menu),
+                              title: Text(meal['name'] as String),
+                              subtitle: Text('${meal['kcal']} kcal'),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 10), // kolejna przerwa
-
-              Expanded( // wypelnia reszte miejsca
-                child: ListView.builder( // przewijalna lista
-                  itemCount: meals.length, // liczba elementow
-
-                  itemBuilder: (context, index) { // buduje pojedynczy kafelek
-                    final meal = meals[index]; // pobiera element z listy
-
-                    return Card(
-                      color: Colors.green, // kolor kafelka
-
-                      child: ListTile( // element listy
-                        leading: const Icon(Icons.restaurant_menu), // ikonka
-                        title: Text(meal['name'] as String), // nazwa dania
-                        subtitle: Text('${meal['kcal']} kcal'), // kalorie
-                      ),
-                    );
-                  },
-                ),
+            ),
+          ),
+          floatingActionButton: SizedBox(
+            width: 60,
+            height: 60,
+            child: FloatingActionButton(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeAddScreen()),
+                );
+
+                if (result != null && result is Map<String, dynamic>) {
+                  await db.addFood(result['name'] as String, result['cal'] as int);
+                }
+              },
+              child: const Icon(Icons.add, size: 30, color: Colors.white),
+            ),
           ),
-        ),
-      ),
-
-      floatingActionButton: SizedBox(
-        width: 60,
-        height: 60,
-
-        child: FloatingActionButton(
-          backgroundColor: Colors.green, // kolor guzika
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-
-          onPressed: () async { // jak sie kliknie
-            final result = await Navigator.push( // idziemy do nowej strony i czekamy na wynik
-              context,
-              MaterialPageRoute(builder: (context) => const HomeAddScreen()),
-            );
-            
-            // Jesli uzytkownik wybral jedzenie, dane z result sa odpowiednio rzutowane i wywolywana jest funkcja addMeal
-            if (result != null && result is Map<String, dynamic>) {
-              addMeal(result['name'] as String, result['cal'] as int);
-            }
-          },
-          child: const Icon(Icons.add, size: 30, color: Colors.white), // ikona plusa w srodku guzika
-        ),
-      ),
-
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // prawa dolna strona
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        );
+      },
     );
   }
 }
